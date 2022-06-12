@@ -1,0 +1,15 @@
+[package]
+name = "egui_rasterizer"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+egui = { path = "../egui/egui" }
+egui-winit = { path = "../egui/egui-winit" }
+eframe = { path = "../egui/eframe" }
+euc = "0.5"
+softbuffer = "0.1"
+egui_demo_lib = { path = "../egui/egui_demo_lib"}
+tiny-skia = "0.6"
