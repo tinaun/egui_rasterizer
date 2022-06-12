@@ -3,29 +3,6 @@ use tiny_skia::{ClipMask, Color, PathBuilder, Pattern, Pixmap, PixmapMut};
 
 use std::collections::HashMap;
 
-fn data_to_pixmap(data: &ImageData) -> Pixmap {
-    let mut image_data: Vec<u8> = match data {
-        ImageData::Color(c) => c
-            .pixels
-            .iter()
-            .flat_map(|c| [c[0], c[1], c[2], c[3]])
-            .collect(),
-        ImageData::Font(f) => f
-            .srgba_pixels(1.0 / 2.2)
-            .flat_map(|c| [c[0], c[1], c[2], c[3]])
-            .collect(),
-    };
-
-    PixmapMut::from_bytes(&mut image_data, data.width() as u32, data.height() as u32)
-        .unwrap()
-        .to_owned()
-}
-pub struct TinySkiaBackend {
-    ctx: Context,
-    textures: HashMap<TextureId, Pixmap>,
-    clip_mask: ClipMask,
-}
-
 pub fn rasterize(size: (u32, u32), ui: impl FnOnce(&Context)) -> Pixmap {
     let mut backend = TinySkiaBackend::new();
 
@@ -44,6 +21,12 @@ pub fn rasterize(size: (u32, u32), ui: impl FnOnce(&Context)) -> Pixmap {
     output.2
 }
 
+pub struct TinySkiaBackend {
+    ctx: Context,
+    textures: HashMap<TextureId, Pixmap>,
+    clip_mask: ClipMask,
+}
+
 impl TinySkiaBackend {
     pub fn new() -> Self {
         Self {
@@ -53,7 +36,11 @@ impl TinySkiaBackend {
         }
     }
 
-    fn output_to_pixmap(
+    pub fn context(&self) -> &Context {
+        &self.ctx
+    }
+
+    pub fn output_to_pixmap(
         &mut self,
         input: egui::RawInput,
         ui: impl FnOnce(&Context),
@@ -343,6 +330,24 @@ impl TinySkiaBackend {
     }
 }
 
+fn data_to_pixmap(data: &ImageData) -> Pixmap {
+    let mut image_data: Vec<u8> = match data {
+        ImageData::Color(c) => c
+            .pixels
+            .iter()
+            .flat_map(|c| [c[0], c[1], c[2], c[3]])
+            .collect(),
+        ImageData::Font(f) => f
+            .srgba_pixels(1.0 / 2.2)
+            .flat_map(|c| [c[0], c[1], c[2], c[3]])
+            .collect(),
+    };
+
+    PixmapMut::from_bytes(&mut image_data, data.width() as u32, data.height() as u32)
+        .unwrap()
+        .to_owned()
+}
+
 fn draw_path(
     mask: &mut ClipMask,
     pixmap: &mut PixmapMut,
@@ -405,105 +410,6 @@ fn draw_path(
     }
 }
 
-fn example_ui(ctx: &Context) {
-    egui::Window::new("Hello world!").show(&ctx, |ui| {
-        ui.label("Hello software rendering!");
-        if ui.button("Click me").clicked() {
-            // take some action here
-        }
 
-        ui.separator();
-        ui.hyperlink("https://example.org");
 
-        #[derive(PartialEq)]
-        enum Enum {
-            First,
-            Second,
-            Third,
-        }
-        let mut my_enum = Enum::First;
-        ui.horizontal(|ui| {
-            ui.radio_value(&mut my_enum, Enum::First, "First");
-            ui.radio_value(&mut my_enum, Enum::Second, "Second");
-            ui.radio_value(&mut my_enum, Enum::Third, "Third");
-        });
-    });
-}
 
-fn run_software(mut ui: impl FnMut(&Context) + 'static) {
-    use egui_winit::winit::{
-        self,
-        event_loop::{ControlFlow, EventLoop},
-    };
-    use softbuffer::GraphicsContext;
-
-    let ev_loop = EventLoop::new();
-    let window = winit::window::WindowBuilder::new()
-        .with_title("Test Render")
-        .build(&ev_loop)
-        .unwrap();
-
-    let mut gc = unsafe { GraphicsContext::new(window) }.unwrap();
-    let mut rasterizer = TinySkiaBackend::new();
-    let mut state = egui_winit::State::new(&ev_loop);
-    state.set_pixels_per_point(2.0);
-
-    ev_loop.run(move |ev, _, control_flow| {
-        use winit::event::{Event, WindowEvent};
-
-        *control_flow = ControlFlow::Wait;
-
-        match ev {
-            Event::WindowEvent {
-                event: WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = ControlFlow::Exit;
-            }
-            Event::WindowEvent { event, .. } => {
-                //println!("{:?}", event);
-                if !state.on_event(&rasterizer.ctx, &event) {}
-                gc.window().request_redraw();
-            }
-            Event::RedrawRequested(_) => {
-                let input = state.take_egui_input(&gc.window());
-                //println!("{:?}", input);
-                let (_output, needs_repaint, pixmap) = rasterizer.output_to_pixmap(input, &mut ui);
-                let w = pixmap.width() as u16;
-                let h = pixmap.height() as u16;
-                let data = pixmap.data().as_ptr() as *const u32;
-                let new_data = unsafe { std::slice::from_raw_parts(data, pixmap.data().len() / 4) };
-
-                gc.set_buffer(new_data, w, h);
-
-                if needs_repaint {
-                    gc.window().request_redraw();
-                }
-            }
-            _ => {}
-        }
-    })
-}
-
-fn main() {
-    // for _ in 0..100 {
-    //     let time = std::time::Instant::now();
-    //     let _pixmap = rasterize((800, 600), example_ui);
-    //     let elapsed = time.elapsed();
-    //     println!("{:?} elapsed", elapsed);
-    // }
-
-    let mut demos = egui_demo_lib::DemoWindows::default();
-
-    let time = std::time::Instant::now();
-    let pixmap = rasterize((1024, 768), |ctx| {
-        ctx.set_visuals(egui::Visuals::light());
-        example_ui(ctx)
-    });
-    let elapsed = time.elapsed();
-    println!("{:?} elapsed", elapsed);
-
-    pixmap.save_png("tmp/test.png").unwrap();
-
-    run_software(move |ctx| demos.ui(ctx));
-}
