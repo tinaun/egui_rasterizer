@@ -7,9 +7,10 @@ edition = "2021"
 
 [dependencies]
 egui = { path = "../egui/egui" }
+tiny-skia = "0.6"
+
+[dev-dependencies]
 egui-winit = { path = "../egui/egui-winit" }
 eframe = { path = "../egui/eframe" }
-euc = "0.5"
 softbuffer = "0.1"
 egui_demo_lib = { path = "../egui/egui_demo_lib"}
-tiny-skia = "0.6"

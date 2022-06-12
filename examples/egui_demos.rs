@@ -58,7 +58,5 @@ fn run_software(mut ui: impl FnMut(&Context) + 'static) {
 
 fn main() {
     let mut demos = egui_demo_lib::DemoWindows::default();
-
-
     run_software(move |ctx| demos.ui(ctx));
 }
