@@ -131,7 +131,7 @@ impl TinySkiaBackend {
                     path.line_to(c.pos.x, c.pos.y);
                     path.close();
                     draw_path(
-                        &mut self.clip_mask,
+                        &self.clip_mask,
                         pixmap,
                         path,
                         Some(a.color),
@@ -177,7 +177,7 @@ impl TinySkiaBackend {
                 }
 
                 draw_path(
-                    &mut self.clip_mask,
+                    &self.clip_mask,
                     pixmap,
                     path,
                     Some(rect.fill),
@@ -189,7 +189,7 @@ impl TinySkiaBackend {
                 path.move_to(points[0].x, points[0].y);
                 path.line_to(points[1].x, points[1].y);
 
-                draw_path(&mut self.clip_mask, pixmap, path, None, Some(stroke));
+                draw_path(&self.clip_mask, pixmap, path, None, Some(stroke));
             }
             Shape::Circle(circle) => {
                 let mut path = PathBuilder::new();
@@ -204,7 +204,7 @@ impl TinySkiaBackend {
                 );
 
                 draw_path(
-                    &mut self.clip_mask,
+                    &self.clip_mask,
                     pixmap,
                     path,
                     Some(circle.fill),
@@ -225,7 +225,7 @@ impl TinySkiaBackend {
                 }
 
                 draw_path(
-                    &mut self.clip_mask,
+                    &self.clip_mask,
                     pixmap,
                     path,
                     Some(path_shape.fill),
@@ -323,9 +323,53 @@ impl TinySkiaBackend {
                     }
                 }
             }
-            Shape::QuadraticBezier(_) => todo!(),
-            Shape::CubicBezier(_) => todo!(),
-            Shape::Callback(_) => todo!(),
+            Shape::QuadraticBezier(qb) => {
+                let mut path = PathBuilder::new();
+                path.move_to(qb.points[0].x, qb.points[0].y);
+                path.quad_to(
+                    qb.points[1].x,
+                    qb.points[1].y,
+                    qb.points[2].x,
+                    qb.points[2].y,
+                );
+
+                if qb.closed {
+                    path.close();
+                }
+
+                draw_path(
+                    &self.clip_mask,
+                    pixmap,
+                    path,
+                    Some(qb.fill),
+                    Some(qb.stroke),
+                );
+            }
+            Shape::CubicBezier(cb) => {
+                let mut path = PathBuilder::new();
+                path.move_to(cb.points[0].x, cb.points[0].y);
+                path.cubic_to(
+                    cb.points[1].x,
+                    cb.points[1].y,
+                    cb.points[2].x,
+                    cb.points[2].y,
+                    cb.points[3].x,
+                    cb.points[3].y,
+                );
+
+                if cb.closed {
+                    path.close();
+                }
+
+                draw_path(
+                    &self.clip_mask,
+                    pixmap,
+                    path,
+                    Some(cb.fill),
+                    Some(cb.stroke),
+                );
+            }
+            Shape::Callback(_) => unimplemented!(),
         }
     }
 }
@@ -349,7 +393,7 @@ fn data_to_pixmap(data: &ImageData) -> Pixmap {
 }
 
 fn draw_path(
-    mask: &mut ClipMask,
+    mask: &ClipMask,
     pixmap: &mut PixmapMut,
     path: PathBuilder,
     fill: Option<Color32>,
@@ -409,7 +453,3 @@ fn draw_path(
         //.unwrap();
     }
 }
-
-
-
-
