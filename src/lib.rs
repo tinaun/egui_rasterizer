@@ -130,15 +130,13 @@ impl TinySkiaBackend {
                     path.line_to(b.pos.x, b.pos.y);
                     path.line_to(c.pos.x, c.pos.y);
                     path.close();
+                    
                     draw_path(
                         &self.clip_mask,
                         pixmap,
                         path,
                         Some(a.color),
-                        Some(egui::Stroke {
-                            width: 0.5,
-                            color: a.color,
-                        }),
+                        None,
                     );
                 }
             }
