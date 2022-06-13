@@ -284,7 +284,7 @@ impl TinySkiaBackend {
                                     shader: tiny_skia::Shader::SolidColor(Color::from_rgba8(
                                         color[0], color[1], color[2], color[3],
                                     )),
-                                    blend_mode: tiny_skia::BlendMode::SourceAtop,
+                                    blend_mode: tiny_skia::BlendMode::SourceIn,
                                     ..Default::default()
                                 },
                                 tiny_skia::Transform::identity(),
