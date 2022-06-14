@@ -123,9 +123,12 @@ impl TinySkiaBackend {
             Shape::Mesh(mesh) => {
                 // TODO
                 // println!("skipping mesh... ({} vertices)", mesh.vertices.len());
-                let mut tris = mesh.vertices.windows(3);
+                let mut tris = mesh.indices.chunks(3);
                 while let Some(&[a, b, c]) = tris.next() {
                     let mut path = PathBuilder::new();
+                    let a = mesh.vertices[a as usize];
+                    let b = mesh.vertices[b as usize];
+                    let c = mesh.vertices[c as usize];
                     path.move_to(a.pos.x, a.pos.y);
                     path.line_to(b.pos.x, b.pos.y);
                     path.line_to(c.pos.x, c.pos.y);
@@ -136,7 +139,7 @@ impl TinySkiaBackend {
                         pixmap,
                         path,
                         Some(a.color),
-                        None,
+                        None
                     );
                 }
             }
@@ -282,7 +285,7 @@ impl TinySkiaBackend {
                                 rect,
                                 &tiny_skia::Paint {
                                     shader: tiny_skia::Shader::SolidColor(Color::from_rgba8(
-                                        color[0], color[1], color[2], color[3],
+                                        color[2], color[1], color[0], color[3],
                                     )),
                                     blend_mode: tiny_skia::BlendMode::SourceIn,
                                     ..Default::default()
@@ -401,7 +404,7 @@ fn draw_path(
 
     if let Some(fill) = fill {
         let fill_shader =
-            tiny_skia::Shader::SolidColor(Color::from_rgba8(fill[0], fill[1], fill[2], fill[3]));
+            tiny_skia::Shader::SolidColor(Color::from_rgba8(fill[2], fill[1], fill[0], fill[3]));
 
         pixmap.fill_path(
             &path,
@@ -420,9 +423,9 @@ fn draw_path(
     if let Some(stroke) = stroke {
         let stroke_color = stroke.color;
         let stroke_shader = tiny_skia::Shader::SolidColor(Color::from_rgba8(
-            stroke_color[0],
-            stroke_color[1],
             stroke_color[2],
+            stroke_color[1],
+            stroke_color[0],
             255,
         ));
 
