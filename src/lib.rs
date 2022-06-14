@@ -298,7 +298,7 @@ impl TinySkiaBackend {
                         let fill_shader = Pattern::new(
                             glyph_pixmap.as_ref(),
                             tiny_skia::SpreadMode::Pad,
-                            tiny_skia::FilterQuality::Bilinear,
+                            tiny_skia::FilterQuality::Bicubic,
                             1.0,
                             tiny_skia::Transform::from_translate(
                                 origin.x + g.pos.x + g.uv_rect.offset.x,
@@ -383,7 +383,7 @@ fn data_to_pixmap(data: &ImageData) -> Pixmap {
             .flat_map(|c| [c[0], c[1], c[2], c[3]])
             .collect(),
         ImageData::Font(f) => f
-            .srgba_pixels(1.0 / 2.2)
+            .srgba_pixels(1.0 / 1.8)
             .flat_map(|c| [c[0], c[1], c[2], c[3]])
             .collect(),
     };
@@ -410,7 +410,7 @@ fn draw_path(
             &path,
             &tiny_skia::Paint {
                 shader: fill_shader,
-                anti_alias: true,
+                anti_alias: false,
                 ..Default::default()
             },
             tiny_skia::FillRule::EvenOdd,
