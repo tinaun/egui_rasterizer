@@ -11,13 +11,17 @@ fn run_software(mut ui: impl FnMut(&Context) + 'static) {
     let ev_loop = EventLoop::new();
     let window = winit::window::WindowBuilder::new()
         .with_title("Test Render")
+        .with_inner_size(winit::dpi::LogicalSize::new(1024.0f32, 768.0))
         .build(&ev_loop)
         .unwrap();
 
     let mut gc = unsafe { GraphicsContext::new(window) }.unwrap();
     let mut rasterizer = TinySkiaBackend::new();
     let mut state = egui_winit::State::new(&ev_loop);
-    state.set_pixels_per_point(2.0);
+
+    if gc.window().scale_factor() == 2.0 {
+        state.set_pixels_per_point(2.0);
+    }
 
     ev_loop.run(move |ev, _, control_flow| {
         use winit::event::{Event, WindowEvent};
@@ -58,5 +62,14 @@ fn run_software(mut ui: impl FnMut(&Context) + 'static) {
 
 fn main() {
     let mut demos = egui_demo_lib::DemoWindows::default();
-    run_software(move |ctx| demos.ui(ctx));
+    run_software(move |ctx| {
+        egui::TopBottomPanel::top("global_menu").show(ctx, |ui| {
+            ui.horizontal(|ui| {
+                egui::widgets::global_dark_light_mode_switch(ui);
+                ui.separator();
+            })
+        });
+
+        demos.ui(ctx);
+    });
 }
